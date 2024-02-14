@@ -7,13 +7,13 @@ PARAMETER x2-min 0.5
 PARAMETER x2-max 6.5
 
 ## Parameters for PCQ
-## number of quadrature points is for each parameter
+## Number of quadrature points indicates that for each parameter
 MAXIMUM DEGREE OF EXPANSION 10
 NUMBER OF QUADRATURE POINTS 10
 NUMBER OF SECONDARY SAMPLING POINTs 100
 
-## threshold value
+## Threshold value
 cri 0.5
 
-## set path for output asc file (numerical result)
+## Set path for output asc file (numerical result)
 ./RUN_RES/

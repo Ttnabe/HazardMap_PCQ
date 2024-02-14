@@ -1,19 +1,22 @@
-# Calculate the PC coefficients for 3 variables and hazard map with uniform SSPs
+"""
+Calculate the PC coefficients for 2 variables and hazard map with uniform SSPs
+Created on Oct. 12th, 2023, by Takahiro Tanabe
+"""
 import numpy as np
 import pandas as pd
 from subprocess import PIPE
 from myFunctions import *
 
 def main():
-    str_file = "pcq_template_v3.cmd"
+    str_file = "pcq_template_v2.cmd"
 
-    ### get parameter list
+    ### Get parameter list
     params_list = read_cmd(str_file)
 
-    ### calculate the coefficients of PCE
+    ### Calculate the coefficients of PCE
     CalcCoef(params_list, params_list[-1])
 
-##  calculate PC coefficients & save them to csv file
+##  Calculate PC coefficients & save them to csv file
 ##  input : p_list - array of parameters comes from read_cmd()
 ##          str_path - path to the directoly holding the file of quadrature points
 # p_list =[N_val, x1_min, x1_max, ..., xD_min, xD_max, NP, NQ, NSSP, hcri, str_path]
@@ -37,7 +40,7 @@ def CalcCoef(p_list, str_path="./"):
     str_file = str_path + "{:d}param_PCQ{:d}.csv".format(N_val, NQ)
     INPUT_LIST = np.loadtxt(str_file, delimiter=",", skiprows=1)
 
-    # calculate PC coefficients
+    # Calculate PC coefficients
     ### Array whose component is [[xi_1^1, ..., xi_D^1], ..., [xi_1^NQ, ..., xi_D^NQ]] for all the quadrature points (x1, ..., xD) (size: (NQ^N_val, N_val))
     INPUT_LIST_XI = np.transpose((2*np.transpose(INPUT_LIST)[0::2] - np.array([np.full(len(INPUT_LIST), x) for x in x_sum])) / np.array([np.full(len(INPUT_LIST), x) for x in x_diff]))
     ### Array whose component is [[w_1^1,...,w_D^1], ..., [w_1^NQ, w_D^NQ]] for all weight (w1, ..., wNQ) (size: (NQ^N_val, N_val))
@@ -77,7 +80,7 @@ def CalcCoef(p_list, str_path="./"):
     ### [[b_0(x0), b_1(x0), ..., b_K(x0)],...,[b_0(xM), b_1(xM), ..., b_K(xM)]]
     BK_LIST = [[np.inner(out, phi_k) for phi_k in LEGENDRE_XI_LIST] for out in MATRIX_OUT]
 
-    ## save PC coefficients as csv file
+    ## Save PC coefficients as csv file
     ## col: the order of PC coefficient, row: position
     df = pd.DataFrame(BK_LIST, columns=str_col)
     rec_file = rec_folder + "Bk_NP{:d}_NQ{:d}.csv".format(NP, NQ)

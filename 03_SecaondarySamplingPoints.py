@@ -1,16 +1,17 @@
-##############################################################################################
-############### Probabilistic hazard map with secondary sampling points (SSPs) ###############
-##############################################################################################
+"""
+Probabilistic hazard map with secondary sampling points (SSPs)
+Created on Oct. 12th, 2023, by Takahiro Tanabe
+"""
 import numpy as np
 import pandas as pd
 
 from myFunctions import *
 
 def main():
-    ### command file name ###
-    str_file = "pcq_template_v3.cmd"
+    ### Command file name ###
+    str_file = "pcq_template_v2.cmd"
 
-    ### get array of parameters ###
+    ### Get array of parameters ###
     params_list = read_cmd(str_file)
 
     ### Read PC coefficients & make Probabilistic hazard map with uniform distributions
@@ -47,7 +48,7 @@ def load_coefficients(p_list, str_path="./"):
     ### Calculate exceed probability at each grid
     P_LIST = np.array([np.count_nonzero(h_array>h_cri) / N_SSP**N_val for h_array in MAT_H])
 
-    ###save file
+    ### Save file
     header_dict = asc_header(str_path+"output_0.asc")
     str_file = str_path + "prob_NP{:d}-NQ{:d}.asc".format(NP, NQ)
     SaveAsc(np.transpose(P_LIST), str_file, header_dict)

@@ -1,26 +1,25 @@
-###############################################
-#### Common functions among PCQ procedures ####
-###############################################
+"""
+Module: Common functions among PCQ procedures
+Created on Oct. 12th, 2023, by Takahiro Tanabe
+"""
 import os
 import sys
 import numpy as np
 
-# read command file & return the parameters written in the file
+# Read command file & return the parameters written in the file
 ## input : str_file - name of command file
 ##         N_val - number of uncertainty input variables
 ## output: array of parameters written in command file
 def read_cmd(str_file):
     cmd_list = []
-    ## set parameter range & number of nodes for the quadature
+    ## Set parameter range & number of nodes for the quadature
     with open(str_file) as f:
         l = f.readlines()
         N_val = int(l[0].split()[-1])
         cmd_list += [N_val]
-        ### minimum & maximum for limit of parameter interval
+        ### Minimum & maximum for limit of parameter interval
         for n in range(N_val):
-            #print(n, l[3+2*n].split()[-1])
             cmd_list += [float(l[3+2*n].split()[-1])]
-            #print(n, l[3+2*n+1].split()[-1])
             cmd_list += [float(l[3+(2*n+1)].split()[-1])]
 
         ### N_P, N_Q, N_SSP
