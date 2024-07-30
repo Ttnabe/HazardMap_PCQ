@@ -14,46 +14,45 @@ def main():
     ### Get array of parameters ###
     params_list = read_cmd(str_file)
 
-    ### Read PC coefficients & make Probabilistic hazard map with uniform distributions
-    load_coefficients(params_list, params_list[-1])
+    ### Generate Probabilistic hazard map with uniform distributions
+    load_coefficients(params_list)
 
 #   Read PC coefficients & make probabilistic hazard map with uniform distributions
 ##  input : p_list - array of parameters comes from read_cmd()
-##          str_path - path to the directoly holding the file of quadrature points
-# p_list =[N_val, x1_min, x1_max, ..., xD_min, xD_max, NP, NQ, NSSP, hcri, str_path]
-def load_coefficients(p_list, str_path="./"):
+# p_list =[N_val, x1_min, x1_max, ..., xD_min, xD_max, NP, NQ, NSSP, cri, str_path, rec_path]
+def load_coefficients(p_list):
     N_val = p_list[0]
 
-    str_folder = str_path + "PCQ_bk/"
+    rec_path, str_path = p_list[-1], p_list[-2]
+    str_folder = rec_path + "PCQ_bk/"
     NP, NQ = p_list[2*N_val+1], p_list[2*N_val+2]
-    N_SSP, h_cri = p_list[2*N_val+3], p_list[2*N_val+4]
-    str_path = p_list[2*N_val+5]
+    N_SSP, cri = p_list[2*N_val+3], p_list[2*N_val+4]
 
     trunc_K = NP + 1
     ### Set SSPs and evaluate them with Legendre polynomials (preparation)
     SSP_LIST = np.linspace(-1, 1, N_SSP)
-    LEGENDRE_SSP_LIST = [special.eval_legendre(i*np.ones(N_SSP), SSP_LIST) for i in range(trunc_K)]
+    LEGENDRE_SSP_LIST = [legendre(i*np.ones(N_SSP), SSP_LIST) for i in range(trunc_K)]
 
     ### Read csv file of b_k as matrix
     str_file = str_folder + "Bk_NP{:d}_NQ{:d}.csv".format(NP, NQ)
     coef = np.loadtxt(str_file, delimiter=",", skiprows=1)
     MAT_Bk = np.array(coef)
 
-    ## Algebric calculation with SSP
+    ## Algebric calculation with SSP:
     MAT_PHI = SSP_calc(N_val, trunc_K, LEGENDRE_SSP_LIST)
 
-    ### Uncertainty output
-    MAT_H = np.dot(MAT_Bk, MAT_PHI)
+    ### Uncertainty output (Eq.(A3) in Appendix A of Tanabe et al.):
+    MAT_OUT = np.dot(MAT_Bk, MAT_PHI)
 
     ### Calculate exceed probability at each grid
-    P_LIST = np.array([np.count_nonzero(h_array>h_cri) / N_SSP**N_val for h_array in MAT_H])
+    P_LIST = np.array([np.count_nonzero(arr>cri) / N_SSP**N_val for arr in MAT_OUT])
 
     ### Save file
     header_dict = asc_header(str_path+"output_0.asc")
-    str_file = str_path + "prob_NP{:d}-NQ{:d}.asc".format(NP, NQ)
-    SaveAsc(np.transpose(P_LIST), str_file, header_dict)
+    rec_file = rec_path + "prob_NP{:d}-NQ{:d}.asc".format(NP, NQ)
+    SaveAsc(np.transpose(P_LIST), rec_file, header_dict)
 
-#   Make tensor of SSPs
+#   Make tensor of SSPs (Right side of Eq.(A3))
 ##  input : N_val  - Number of uncertainty inputs (less than 4)
 ##          trunc_K - Maximum degree of orthogonal polynomial
 ##          LEGENDRE_SSP_LIST - List of L_n(xi); xi in [-1, 1]
@@ -83,7 +82,10 @@ def SaveAsc(data1D, rec_file, header_dict):
     y_num = header_dict["nrows"]
     asc_header = ""
     for mykey, myvalue in header_dict.items():
-        asc_header += "{:s}\t\t{:.0f}\n".format(mykey, myvalue)
+        if mykey[0]=="n":
+            asc_header += "{:s}\t{:.0f}\n".format(mykey, myvalue)
+        else:
+            asc_header += "{:s}\t{:.1f}\n".format(mykey, myvalue)
 
     ### 1D array to ascii format
     GRID_DATA = []
