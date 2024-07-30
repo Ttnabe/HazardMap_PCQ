@@ -31,10 +31,7 @@ def CalcCoef(p_list):
         x_sum += [p_list[2*(n+1)] + p_list[2*n+1]]
         x_diff += [p_list[2*(n+1)] - p_list[2*n+1]]
     NP, NQ = p_list[2*N_val+1], p_list[2*N_val+2]
-    #MODIFY--------------------------
-    #header = asc_header(str_path+"output_0.asc")
-    header = asc_header(str_path+"../10_RES/0-50_h.asc")
-    #--------------------------MODIFY
+    header = asc_header(str_path+"output_0.asc")
     N_DATA = header["ncols"] * header["nrows"]
 
     ## csv file recording nodes and weight (made by 01_Set*.py)
@@ -77,10 +74,7 @@ def CalcCoef(p_list):
     ###  [output(x0), output(x1), ..., output(xM)]_\theta_(NQ^N_val)]
     ### x0, x1, ..., xM indicate cell position
     ### \theta_d (d=1, ..., NQ^N_val) indicates input variable
-    #MODIFY--------------------------
-    #MATRIX_OUT = np.transpose([np.ravel(np.loadtxt(str_path+"output_{:d}.asc".format(nq), skiprows=6)) for nq in range(len(INPUT_LIST))])
-    MATRIX_OUT = np.transpose([np.ravel(np.loadtxt(str_path+"csv_Hmax{:d}.csv".format(nq), delimiter=",")) for nq in range(len(INPUT_LIST))])
-    #--------------------------MODIFY
+    MATRIX_OUT = np.transpose([np.ravel(np.loadtxt(str_path+"output_{:d}.asc".format(nq), skiprows=6)) for nq in range(len(INPUT_LIST))])
     ### Calculate PC coefficients (Eq.(A2) in Appendix A of Tanabe et al.):
     ### [[b_0(x0), b_1(x0), ..., b_K(x0)],...,[b_0(xM), b_1(xM), ..., b_K(xM)]]
     BK_LIST = [[np.inner(out, phi_k) for phi_k in LEGENDRE_XI_LIST] for out in MATRIX_OUT]
