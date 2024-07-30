@@ -4,7 +4,6 @@ Created on Oct. 12th, 2023, by Takahiro Tanabe
 """
 import numpy as np
 import pandas as pd
-from subprocess import PIPE
 from myFunctions import *
 
 def main():
@@ -14,17 +13,17 @@ def main():
     params_list = read_cmd(str_file)
 
     ### Calculate the coefficients of PCE
-    CalcCoef(params_list, params_list[-1])
+    CalcCoef(params_list)
 
 ##  Calculate PC coefficients & save them to csv file
 ##  input : p_list - array of parameters comes from read_cmd()
-##          str_path - path to the directoly holding the file of quadrature points
-# p_list =[N_val, x1_min, x1_max, ..., xD_min, xD_max, NP, NQ, NSSP, hcri, str_path]
-def CalcCoef(p_list, str_path="./"):
+# p_list =[N_val, x1_min, x1_max, ..., xD_min, xD_max, NP, NQ, NSSP, cri, str_path, rec_path]
+def CalcCoef(p_list):
     ### Number of uncertainty inputs
     N_val = p_list[0]
 
-    rec_folder = str_path + "PCQ_bk/"
+    rec_path, str_path = p_list[-1], p_list[-2]
+    rec_folder = rec_path + "PCQ_bk/"
     os.makedirs(rec_folder, exist_ok=True)
 
     x_sum, x_diff = [], []
@@ -32,12 +31,14 @@ def CalcCoef(p_list, str_path="./"):
         x_sum += [p_list[2*(n+1)] + p_list[2*n+1]]
         x_diff += [p_list[2*(n+1)] - p_list[2*n+1]]
     NP, NQ = p_list[2*N_val+1], p_list[2*N_val+2]
-    str_path = p_list[2*N_val+5]
-    header = asc_header(str_path+"output_0.asc")
+    #MODIFY--------------------------
+    #header = asc_header(str_path+"output_0.asc")
+    header = asc_header(str_path+"../10_RES/0-50_h.asc")
+    #--------------------------MODIFY
     N_DATA = header["ncols"] * header["nrows"]
 
-    ## csv file recording nodes and weight
-    str_file = str_path + "{:d}param_PCQ{:d}.csv".format(N_val, NQ)
+    ## csv file recording nodes and weight (made by 01_Set*.py)
+    str_file = rec_path + "{:d}param_PCQ{:d}.csv".format(N_val, NQ)
     INPUT_LIST = np.loadtxt(str_file, delimiter=",", skiprows=1)
 
     # Calculate PC coefficients
@@ -70,13 +71,17 @@ def CalcCoef(p_list, str_path="./"):
     ### Column name "b_k"
     str_col = ["b_{:d}".format(i) for i in range(len(LEGENDRE_XI_LIST))]
 
-    ### Array of output:
-    ### [[output(x0), output(x1), ..., output(xM)]_condition#1,]
+    ### Array of output (H_max in Appendix A of Tanabe et al.):
+    ### [[output(x0), output(x1), ..., output(xM)]_\theta_1,]
     ###  ....
-    ###  [output(x0), output(x1), ..., output(xM)]_condition#NQ^N_val]
+    ###  [output(x0), output(x1), ..., output(xM)]_\theta_(NQ^N_val)]
     ### x0, x1, ..., xM indicate cell position
-    MATRIX_OUT = np.transpose([np.ravel(np.loadtxt(str_path+"output_{:d}.asc".format(nq), skiprows=6)) for nq in range(len(INPUT_LIST))])
-    ### Calculate PC coefficients:
+    ### \theta_d (d=1, ..., NQ^N_val) indicates input variable
+    #MODIFY--------------------------
+    #MATRIX_OUT = np.transpose([np.ravel(np.loadtxt(str_path+"output_{:d}.asc".format(nq), skiprows=6)) for nq in range(len(INPUT_LIST))])
+    MATRIX_OUT = np.transpose([np.ravel(np.loadtxt(str_path+"csv_Hmax{:d}.csv".format(nq), delimiter=",")) for nq in range(len(INPUT_LIST))])
+    #--------------------------MODIFY
+    ### Calculate PC coefficients (Eq.(A2) in Appendix A of Tanabe et al.):
     ### [[b_0(x0), b_1(x0), ..., b_K(x0)],...,[b_0(xM), b_1(xM), ..., b_K(xM)]]
     BK_LIST = [[np.inner(out, phi_k) for phi_k in LEGENDRE_XI_LIST] for out in MATRIX_OUT]
 
@@ -86,11 +91,6 @@ def CalcCoef(p_list, str_path="./"):
     rec_file = rec_folder + "Bk_NP{:d}_NQ{:d}.csv".format(NP, NQ)
     df.to_csv(rec_file, index=False)
 
-##  Calculate Le_n(x)
-##  input : n - degree of Legendre polynomial
-##          x - A variable in [-1, 1]
-def legendre(n, x):
-    return special.eval_legendre(n, x)
 ##  Calculate int{Le_n*Le_n}
 ##  input : n - degree of Legendre polynomial
 def LAMBDA_n(n):
